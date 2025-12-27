@@ -12,7 +12,7 @@ services:
       POSTGRES_DB: finance_db
       POSTGRES_INITDB_ARGS: "-E UTF8"
     ports:
-      - "5436:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -47,7 +47,7 @@ services:
     container_name: finance-pgadmin
     restart: unless-stopped
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@finance.local
+      PGADMIN_DEFAULT_EMAIL: admin@finance.app
       PGADMIN_DEFAULT_PASSWORD: admin123
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     ports:
