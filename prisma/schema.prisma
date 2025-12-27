@@ -1,0 +1,156 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  username      String   @unique
+  password      String
+  fullName      String?
+  avatar        String?
+  currency      String   @default("IDR")
+  locale        String   @default("id-ID")
+  themeId       String   @default("purple-dark")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  lastLoginAt   DateTime?
+
+  bankAccounts      BankAccount[]
+  transactions      Transaction[]
+  incomeTypes       IncomeType[]
+  expenseCategories ExpenseCategory[]
+  budgets           Budget[]
+  sessions          Session[]
+
+  @@map("users")
+}
+
+model BankAccount {
+  id        String   @id @default(uuid())
+  name      String
+  type      String   // checking, savings, ewallet, investment, credit_card
+  balance   Decimal  @default(0) @db.Decimal(15, 2)
+  currency  String   @default("IDR")
+  color     String   @default("#6366F1")
+  icon      String?
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@index([userId])
+  @@map("bank_accounts")
+}
+
+model Transaction {
+  id              String   @id @default(uuid())
+  type            String   // income or expense
+  amount          Decimal  @db.Decimal(15, 2)
+  description     String?
+  notes           String?
+  date            DateTime @default(now())
+  tags            String[]
+  isRecurring     Boolean  @default(false)
+  recurringPeriod String?
+  attachments     String[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  userId            String
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  incomeTypeId      String?
+  incomeType        IncomeType?      @relation(fields: [incomeTypeId], references: [id], onDelete: SetNull)
+  expenseCategoryId String?
+  expenseCategory   ExpenseCategory? @relation(fields: [expenseCategoryId], references: [id], onDelete: SetNull)
+  bankAccountId     String?
+  bankAccount       BankAccount?     @relation(fields: [bankAccountId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([date])
+  @@index([type])
+  @@index([bankAccountId])
+  @@map("transactions")
+}
+
+model IncomeType {
+  id        String   @id @default(uuid())
+  name      String
+  icon      String   @default("DollarSign")
+  color     String   @default("#10B981")
+  sortOrder Int      @default(0)
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@index([userId])
+  @@map("income_types")
+}
+
+model ExpenseCategory {
+  id        String   @id @default(uuid())
+  name      String
+  icon      String   @default("ShoppingCart")
+  color     String   @default("#EF4444")
+  sortOrder Int      @default(0)
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  budgets      Budget[]
+
+  @@index([userId])
+  @@map("expense_categories")
+}
+
+model Budget {
+  id          String   @id @default(uuid())
+  month       Int
+  year        Int
+  planned     Decimal  @db.Decimal(15, 2)
+  actual      Decimal  @default(0) @db.Decimal(15, 2)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId      String
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId  String
+  category    ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, categoryId, month, year])
+  @@index([userId])
+  @@map("budgets")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}

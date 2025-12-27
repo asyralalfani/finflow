@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: finance-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: finance_user
+      POSTGRES_PASSWORD: finance_pass_2024
+      POSTGRES_DB: finance_db
+      POSTGRES_INITDB_ARGS: "-E UTF8"
+    ports:
+      - "5436:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U finance_user -d finance_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - finance-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: finance-redis
+    restart: unless-stopped
+    command: redis-server --requirepass redis_pass_2024 --appendonly yes
+    ports:
+      - "6381:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - finance-network
+
+  # PgAdmin (Database Management UI)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: finance-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@finance.local
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - finance-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  finance-network:
+    driver: bridge
