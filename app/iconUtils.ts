@@ -1,9 +1,16 @@
 import * as LucideIcons from 'lucide-react';
+import { LucideProps } from 'lucide-react';
 
 // Map icon names to Lucide React components
-export function getIcon(iconName: string, props?: any) {
-    const Icon = (LucideIcons as any)[iconName] || LucideIcons.HelpCircle;
-    return <Icon { ...props } />;
+export function getIcon(iconName: string, props?: LucideProps) {
+    const IconComponent = (LucideIcons as any)[iconName];
+
+    if (!IconComponent) {
+        const HelpCircle = LucideIcons.HelpCircle;
+        return HelpCircle;
+    }
+
+    return IconComponent;
 }
 
 // Popular icons for finance app
@@ -46,7 +53,6 @@ export const iconNames = [
 
     // Utilities
     'Receipt',
-    'Zap',
     'Wifi',
     'Phone',
 
@@ -60,6 +66,8 @@ export const iconNames = [
     'User',
     'Users',
     'Settings',
+    'Shield',
+    'Sparkles',
 ];
 
 // Get all available icons

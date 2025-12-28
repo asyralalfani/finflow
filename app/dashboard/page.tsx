@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { getTheme } from '@/app/themes';
 import { api } from '@/lib/api-client';
+import AddTransactionModal from '@/components/AddTransactionModal';
+import SettingsModal from '@/components/SettingsModal';
 import {
     Loader2,
     LogOut,
@@ -14,6 +16,7 @@ import {
     DollarSign,
     Plus,
     Settings,
+    RefreshCw,
 } from 'lucide-react';
 import type { Transaction, BankAccount, Summary } from '@/app/types';
 
@@ -21,6 +24,7 @@ export default function Dashboard() {
     const { user, loading: authLoading, logout } = useAuth();
     const router = useRouter();
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [accounts, setAccounts] = useState<BankAccount[]>([]);
     const [summary, setSummary] = useState<Summary>({
@@ -29,6 +33,8 @@ export default function Dashboard() {
         balance: 0,
         count: 0,
     });
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [showSettingsModal, setShowSettingsModal] = useState(false);
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -52,11 +58,21 @@ export default function Dashboard() {
             console.error('Failed to load data:', error);
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
+    };
+
+    const handleRefresh = async () => {
+        setRefreshing(true);
+        await loadData();
     };
 
     const handleLogout = async () => {
         await logout();
+    };
+
+    const handleTransactionAdded = () => {
+        handleRefresh();
     };
 
     if (authLoading || loading) {
@@ -96,7 +112,17 @@ export default function Dashboard() {
                         </div>
 
                         <div className="flex items-center gap-2">
-                            <button className="p-2 rounded-lg hover:bg-white/10 transition-colors">
+                            <button
+                                onClick={handleRefresh}
+                                disabled={refreshing}
+                                className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                            >
+                                <RefreshCw className={`w-5 h-5 text-gray-300 ${refreshing ? 'animate-spin' : ''}`} />
+                            </button>
+                            <button
+                                onClick={() => setShowSettingsModal(true)}
+                                className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                            >
                                 <Settings className="w-5 h-5 text-gray-300" />
                             </button>
                             <button
@@ -193,7 +219,8 @@ export default function Dashboard() {
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-xl font-bold text-white">Recent Transactions</h2>
                         <button
-                            className="flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors"
+                            onClick={() => setShowAddModal(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg transition-all transform hover:scale-105"
                         >
                             <Plus className="w-4 h-4" />
                             Add Transaction
@@ -204,7 +231,7 @@ export default function Dashboard() {
                         <div className="text-center py-12">
                             <DollarSign className="w-12 h-12 text-gray-500 mx-auto mb-4" />
                             <p className="text-gray-400">No transactions yet</p>
-                            <p className="text-sm text-gray-500 mt-2">Add your first transaction to get started</p>
+                            <p className="text-sm text-gray-500 mt-2">Click "Add Transaction" to get started</p>
                         </div>
                     ) : (
                         <div className="space-y-3">
@@ -216,8 +243,8 @@ export default function Dashboard() {
                                     <div className="flex items-center gap-4">
                                         <div
                                             className={`w-10 h-10 rounded-full flex items-center justify-center ${transaction.type === 'income'
-                                                    ? 'bg-green-500/20'
-                                                    : 'bg-red-500/20'
+                                                ? 'bg-green-500/20'
+                                                : 'bg-red-500/20'
                                                 }`}
                                         >
                                             {transaction.type === 'income' ? (
@@ -235,15 +262,19 @@ export default function Dashboard() {
                                                     )}
                                             </p>
                                             <p className="text-sm text-gray-400">
-                                                {new Date(transaction.date).toLocaleDateString('id-ID')}
+                                                {new Date(transaction.date).toLocaleDateString('id-ID', {
+                                                    day: 'numeric',
+                                                    month: 'short',
+                                                    year: 'numeric',
+                                                })}
                                             </p>
                                         </div>
                                     </div>
                                     <div className="text-right">
                                         <p
-                                            className={`font-bold ${transaction.type === 'income'
-                                                    ? 'text-green-400'
-                                                    : 'text-red-400'
+                                            className={`font-bold text-lg ${transaction.type === 'income'
+                                                ? 'text-green-400'
+                                                : 'text-red-400'
                                                 }`}
                                         >
                                             {transaction.type === 'income' ? '+' : '-'}
@@ -252,6 +283,11 @@ export default function Dashboard() {
                                                 currency: user.currency || 'IDR',
                                             }).format(Number(transaction.amount))}
                                         </p>
+                                        {transaction.bankAccount && (
+                                            <p className="text-xs text-gray-500">
+                                                {transaction.bankAccount.name}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                             ))}
@@ -307,6 +343,21 @@ export default function Dashboard() {
                     )}
                 </div>
             </main>
+
+            {/* Add Transaction Modal */}
+            <AddTransactionModal
+                isOpen={showAddModal}
+                onClose={() => setShowAddModal(false)}
+                onSuccess={handleTransactionAdded}
+                themeColors={theme.colors}
+            />
+
+            {/* Settings Modal */}
+            <SettingsModal
+                isOpen={showSettingsModal}
+                onClose={() => setShowSettingsModal(false)}
+                themeColors={theme.colors}
+            />
         </div>
     );
 }

@@ -59,6 +59,19 @@ class APIClient {
         return this.request<{ user: any }>('/api/auth/me');
     }
 
+    async updateProfile(data: {
+        fullName?: string;
+        avatar?: string;
+        themeId?: string;
+        currency?: string;
+        locale?: string;
+    }) {
+        return this.request('/api/auth/me', {
+            method: 'PATCH',
+            body: JSON.stringify(data),
+        });
+    }
+
     // Bank Accounts
     async getAccounts() {
         return this.request<{ accounts: any[] }>('/api/accounts');
