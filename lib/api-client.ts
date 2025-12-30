@@ -43,7 +43,7 @@ class APIClient {
     }
 
     async login(data: { email: string; password: string }) {
-        return this.request('/api/auth/login', {
+        return this.request<{ user: any }>('/api/auth/login', {
             method: 'POST',
             body: JSON.stringify(data),
         });

@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const login = async (email: string, password: string) => {
         try {
-            const { user: userData } = await api.login({ email, password });
+            const { user: userData } = await api.login({ email, password }) as { user: User };
             setUser(userData);
             router.push('/dashboard');
         } catch (error: any) {
@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         fullName?: string;
     }) => {
         try {
-            const { user: userData } = await api.register(data);
+            const { user: userData } = await api.register(data) as { user: User };
             setUser(userData);
             router.push('/dashboard');
         } catch (error: any) {
