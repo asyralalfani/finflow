@@ -7,16 +7,16 @@ services:
     container_name: finance-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: finance_user
-      POSTGRES_PASSWORD: finance_pass_2024
-      POSTGRES_DB: finance_db
+      POSTGRES_USER: ${POSTGRES_USER:-finance_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-finance_db}
       POSTGRES_INITDB_ARGS: "-E UTF8"
     ports:
-      - "5433:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U finance_user -d finance_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-finance_user} -d ${POSTGRES_DB:-finance_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -28,9 +28,9 @@ services:
     image: redis:7-alpine
     container_name: finance-redis
     restart: unless-stopped
-    command: redis-server --requirepass redis_pass_2024 --appendonly yes
+    command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
     ports:
-      - "6381:6379"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -47,11 +47,11 @@ services:
     container_name: finance-pgadmin
     restart: unless-stopped
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@finance.app
-      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@finance.app}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     ports:
-      - "5050:80"
+      - "${PGADMIN_PORT:-5050}:80"
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     depends_on:
