@@ -112,7 +112,15 @@ class APIClient {
         const queryParams = new URLSearchParams(
             params as Record<string, string>
         ).toString();
-        return this.request<{ transactions: any[] }>(
+        return this.request<{
+            transactions: any[];
+            summary: {
+                income: number;
+                expense: number;
+                balance: number;
+                count: number;
+            };
+        }>(
             `/api/transactions${queryParams ? `?${queryParams}` : ''}`
         );
     }
